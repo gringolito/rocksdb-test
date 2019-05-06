@@ -5,3 +5,6 @@ RocksDB/5.18.3@koeleck/stable
 [generators]
 cmake_find_package
 cmake_paths
+
+[options]
+RocksDB:shared=True
