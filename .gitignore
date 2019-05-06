@@ -33,3 +33,6 @@
 
 # Build directory
 _build
+
+# Compile-commands
+compile_commands.json
