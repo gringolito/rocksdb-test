@@ -3,4 +3,5 @@ jsonformoderncpp/3.6.1@vthiery/stable
 RocksDB/5.18.3@koeleck/stable
 
 [generators]
-cmake
+cmake_find_package
+cmake_paths
