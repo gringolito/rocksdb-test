@@ -1,7 +1,21 @@
-include_directories(${RocksDB_INCLUDE_DIRS} ${nlohmann_json_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_executable(${PROJECT_NAME} main.cc)
-set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-target_link_libraries(${PROJECT_NAME} ${RocksDB_LIBRARIES})
+add_subdirectory(lib)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+add_executable(put-db put.cc)
+set_target_properties(put-db PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+target_link_libraries(put-db mpsync)
+
+add_executable(get-db get.cc)
+set_target_properties(get-db PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+target_link_libraries(get-db mpsync)
+
+add_executable(del-db del.cc)
+set_target_properties(del-db PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+target_link_libraries(del-db mpsync)
+
+install(TARGETS put-db
+                get-db
+                del-db
+                DESTINATION
+                bin)

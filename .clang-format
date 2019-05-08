@@ -1,9 +1,10 @@
-# Complete list of style options can be found at: 
-# http://clang.llvm.org/docs/ClangFormatStyleOptions.html
 ---
+Language: Cpp
 BasedOnStyle: Google
 IndentWidth: 4
 DerivePointerAlignment: false
-PointerAlignment: Left
+PointerAlignment: Right
 ColumnLimit: 100
+BreakBeforeBraces: Stroustrup
+AllowShortFunctionsOnASingleLine: false
 ...
