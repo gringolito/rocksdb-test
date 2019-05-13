@@ -44,4 +44,4 @@ class DB final {
     bool OpenSlaveMode(const std::string &db_path);
 };
 
-} /* mpsync namespace */
+}  // namespace mpsync

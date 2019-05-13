@@ -27,8 +27,11 @@ cd _build
 rocksdb_repo_installed=$(conan remote list | grep 'https://api.bintray.com/conan/koeleck/public-conan')
 test -n "${rocksdb_repo_installed}" || conan remote add koeleck https://api.bintray.com/conan/koeleck/public-conan
 
+# fswatch_repo_installed=$(conan remote list | grep 'https://api.bintray.com/conan/conan/conan-transit')
+# test -n "${fswatch_repo_installed}" || conan remote add conan-transit https://api.bintray.com/conan/conan/conan-transit
+
 set -e
-conan install -s compiler.libcxx=libstdc++11 --build missing ..
+conan install -s compiler.libcxx=libc++ --build missing ..
 
 ####################################################################################################
 # Build the project
