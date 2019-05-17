@@ -7,7 +7,8 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#pragma(once)
+#ifndef MPSYNC_INCLUDE_MPSYNC_MIDDLEWARE_H_
+#define MPSYNC_INCLUDE_MPSYNC_MIDDLEWARE_H_
 
 #include <functional>
 
@@ -33,3 +34,5 @@ class Middleware {
 };
 
 }  // namespace mpsync
+
+#endif  // MPSYNC_INCLUDE_MPSYNC_MIDDLEWARE_H_

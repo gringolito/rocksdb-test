@@ -7,7 +7,8 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#pragma(once)
+#ifndef MPSYNC_INCLUDE_MPSYNC_PID_H_
+#define MPSYNC_INCLUDE_MPSYNC_PID_H_
 
 #include <cstdint>
 #include <string>
@@ -24,3 +25,5 @@ struct ProcessSignature {
 };
 
 }  // namespace mpsync
+
+#endif  // MPSYNC_INCLUDE_MPSYNC_PID_H_

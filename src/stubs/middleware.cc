@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstdio>
+#include <cassert>
 
 #include <fstream>
 
@@ -19,14 +20,26 @@ namespace mpsync {
 namespace stubs {
 
 static const std::string kPidPath{"/tmp/stubmw/"};
-static constexpr auto kInotifyEventSize = sizeof(inotify_event) + NAME_MAX + 1;
 
 Middleware::Middleware()
+    : myself_({}),
+      listening_server_({}),
+      on_server_found_cb_(nullptr),
+      on_server_lost_cb_(nullptr),
+      server_pid_({}),
+      inotify_(0),
+      watch_(0),
+      server_is_found_(false),
+      server_published_(false)
 {
 }
 
 Middleware::~Middleware()
 {
+    if (server_published_) {
+        UnpublishServer();
+    }
+
     if (watch_ > 0) {
         inotify_rm_watch(inotify_, watch_);
         close(watch_);
@@ -40,14 +53,22 @@ void Middleware::PublishServer(const ProcessSignature &server_signature)
 {
     myself_ = server_signature;
 
-    std::ofstream pid_file(kPidPath + server_signature._name,
-                           std::ofstream::binary | std::ofstream::trunc);
+    std::ofstream pid_file(kPidPath + myself_._name, std::ofstream::binary | std::ofstream::trunc);
     pid_file << getpid() << std::endl;
     pid_file.close();
+    server_published_ = true;
 }
 
 void Middleware::UnpublishServer()
 {
+    if (!server_published_) {
+        return;
+    }
+
+    std::ofstream pid_file(kPidPath + myself_._name, std::ofstream::binary | std::ofstream::trunc);
+    pid_file << 0 << std::endl;
+    pid_file.close();
+    server_published_ = false;
 }
 
 void Middleware::RegisterToServer(const ProcessSignature &server_signature,
@@ -90,53 +111,61 @@ void Middleware::WatchServerPid()
                                IN_MODIFY | IN_CREATE | IN_DELETE_SELF);
     assert(watch_ > 0);
 
-    SubscribeToFdEvents(watch_, [this](int watch) { InotifyEvent(watch); });
+    SubscribeToFdEvents(watch_, [this](int watch) { ReadInotifyEvent(watch); });
 }
 
-void Middleware::InotifyEvent(int watch)
+void Middleware::ReadInotifyEvent(int watch)
 {
-    inotify_event *event = malloc(kInotifyEventSize);
-
     ssize_t size;
+    const char *ptr;
+    char buffer[BUFSIZ] __attribute__((aligned(__alignof__(inotify_event))));
+
     do {
-        size = read(watch, event, kInotifyEventSize);
+        size = read(watch, buffer, sizeof buffer);
         if (size == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 // No more events to read
                 break;
-            }
-            else {
+            } else {
                 perror("Failed to read inotify event");
                 abort();
             }
+        }
 
-            if (event->mask & (IN_CREATE | IN_MODIFY) {
-                pid = ReadPid();
-                if (pid._pid != 0) {
-                    if (server_pid_._pid == pid._pid) {
-                        continue;
-                    }
-
-                    /* A new server was found, so notify that the latest was lost */
-                    if (server_pid_._pid != 0) {
-                        ServerLost();
-                    }
-                    ServerFound(pid);
-                }
-                else {
-                    ServerLost();
-                }
-            }
-            else if (event->mask & IN_DELETE_SELF) {
-                ServerLost();
-            }
+        const inotify_event *event;
+        const char *buffer_end = buffer + size;
+        for (ptr = buffer; ptr < buffer_end; ptr += sizeof(*event) + event->len) {
+            event = reinterpret_cast<const inotify_event *>(ptr);
+            ProcessInotifyEvent(event);
         }
     } while (size > 0);
-}  // namespace stubs
+}
+
+void Middleware::ProcessInotifyEvent(const inotify_event *event)
+{
+    if (event->mask & (IN_CREATE | IN_MODIFY)) {
+        auto pid = ReadPid();
+        if (pid._pid != 0) {
+            if (server_pid_._pid == pid._pid) {
+                return;
+            }
+
+            /* A new server was found, so notify that the latest was lost */
+            if (server_pid_._pid != 0) {
+                ServerLost();
+            }
+            ServerFound(std::move(pid));
+        } else {
+            ServerLost();
+        }
+    } else if (event->mask & IN_DELETE_SELF) {
+        ServerLost();
+    }
+}
 
 Pid Middleware::ReadPid()
 {
-    std::ifstream pid_file(kPidPath + server_signature._name, std::ofstream::binary);
+    std::ifstream pid_file(kPidPath + listening_server_._name, std::ofstream::binary);
     Pid pid;
     pid_file >> pid._pid;
     return pid;
@@ -144,24 +173,25 @@ Pid Middleware::ReadPid()
 
 void Middleware::ServerLost()
 {
-    if (server_pid._pid == 0) {
+    if (!server_is_found_) {
         return;
     }
 
-    if (on_server_lost_cb) {
-        on_server_lost_cb(server_pid_);
+    if (on_server_lost_cb_) {
+        on_server_lost_cb_(server_pid_);
     }
 
     server_pid_ = {};
-    server_was_lost_ = true;
+    server_is_found_ = false;
 }
 
 void Middleware::ServerFound(Pid &&pid)
 {
-    server_was_found_ = true;
+    server_is_found_ = true;
     server_pid_ = std::move(pid);
-    if (on_server_found_cb) {
-        on_server_found_cb(server_pid_);
+
+    if (on_server_found_cb_) {
+        on_server_found_cb_(server_pid_);
     }
 }
 

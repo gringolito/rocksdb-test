@@ -13,16 +13,34 @@
 namespace mpsync {
 namespace test {
 
+static const ProcessSignature kTestProcess{._name = "test", ._signature = nullptr};
+
 class Client final {
    public:
-    Client() : sync_(mpsync::stubs::Middleware())
+    Client()
     {
+        mw_ = new stubs::Middleware();
+        sync_ = new Sync(mw_, kTestProcess);
+        sync_->RegisterServerFound([this](const Pid &) { return; });
+        sync_->RegisterServerLost([this](const Pid &) { return; });
     }
-    ~Client();
+
+    ~Client()
+    {
+        delete sync_;
+        delete mw_;
+    }
 
    private:
-    Sync sync_;
+    Middleware *mw_;
+    Sync *sync_;
 };
 
 }  // namespace test
 }  // namespace mpsync
+
+int main() {
+    auto *client = new mpsync::test::Client();
+    delete client;
+    return 0;
+}

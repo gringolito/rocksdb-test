@@ -7,7 +7,8 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#pragma(once)
+#ifndef MPSYNC_INCLUDE_MPSYNC_DB_H_
+#define MPSYNC_INCLUDE_MPSYNC_DB_H_
 
 #include <string>
 
@@ -45,3 +46,5 @@ class DB final {
 };
 
 }  // namespace mpsync
+
+#endif  // MPSYNC_INCLUDE_MPSYNC_DB_H_

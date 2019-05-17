@@ -7,23 +7,25 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#pragma(once)
+#ifndef MPSYNC_INCLUDE_MPSYNC_SYNC_H_
+#define MPSYNC_INCLUDE_MPSYNC_SYNC_H_
 
 #include <functional>
 
-#include "mpsync/db.h"
 #include "mpsync/middleware.h"
 
 namespace mpsync {
 
+class DB;  //!< Forward declaration
+
 class Sync final {
    public:
-    explicit Sync(Middleware *mw, DB *db);
-    ~Sync() = default;
+    explicit Sync(Middleware *mw, ProcessSignature process);
+    ~Sync();
 
-    void RegisterServerFound(std::function<void(Pid &)> on_server_found_event);
+    void RegisterServerFound(OnServerFoundCb on_server_found_event);
     void UnregisterServerFound();
-    void RegisterServerLost(std::function<void(Pid &)> on_server_lost_event);
+    void RegisterServerLost(OnServerLostCb on_server_lost_event);
     void UnregisterServerLost();
 
     const Sync &operator=(const Sync &) = delete;
@@ -34,6 +36,13 @@ class Sync final {
    private:
     Middleware *mw_;
     DB *db_;
+    OnServerFoundCb on_server_found_cb_;
+    OnServerLostCb on_server_lost_cb_;
+
+    void OnServerFoundEvent(const Pid &pid);
+    void OnServerLostEvent(const Pid &pid);
 };
 
 }  // namespace mpsync
+
+#endif  // MPSYNC_INCLUDE_MPSYNC_SYNC_H_

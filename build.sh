@@ -27,15 +27,15 @@ cd _build
 rocksdb_repo_installed=$(conan remote list | grep 'https://api.bintray.com/conan/koeleck/public-conan')
 test -n "${rocksdb_repo_installed}" || conan remote add koeleck https://api.bintray.com/conan/koeleck/public-conan
 
-# fswatch_repo_installed=$(conan remote list | grep 'https://api.bintray.com/conan/conan/conan-transit')
-# test -n "${fswatch_repo_installed}" || conan remote add conan-transit https://api.bintray.com/conan/conan/conan-transit
+fswatch_repo_installed=$(conan remote list | grep 'https://api.bintray.com/conan/bincrafters/public-conan')
+test -n "${fswatch_repo_installed}" || conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
 set -e
-conan install -s compiler.libcxx=libc++ --build missing ..
+conan install -s compiler.libcxx=libstdc++11 --build missing ..
 
 ####################################################################################################
 # Build the project
 ####################################################################################################
-cmake -DCMAKE_TOOLCHAIN_FILE=conan_paths.cmake ${verbose} ..
+cmake -DCMAKE_TOOLCHAIN_FILE=conan_paths.cmake -DMPSYNC_BUILD_STUBS=yes -DBUILD_TESTING=yes ${verbose} ..
 cmake --build .
 cp compile_commands.json ..

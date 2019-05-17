@@ -7,11 +7,14 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#pragma(once)
+#ifndef MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
+#define MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
 
 #include <unordered_map>
 
 #include "mpsync/middleware.h"
+
+struct inotify_event;  //!< Forward declaration
 
 namespace mpsync {
 namespace stubs {
@@ -37,16 +40,19 @@ class Middleware final : public mpsync::Middleware {
     Pid server_pid_;
     int inotify_;
     int watch_;
-    bool server_was_found_;
-    bool server_was_lost_;
+    bool server_is_found_;
+    bool server_published_;
     std::unordered_map<int, OnFdEventCb> fd_callbacks_;
 
     void WatchServerPid();
-    void InotifyEvent(int watch);
-    void ReadPid();
+    void ReadInotifyEvent(int watch);
+    void ProcessInotifyEvent(const inotify_event *event);
+    Pid ReadPid();
     void ServerLost();
-    void ServerFound(uint64_t pid);
+    void ServerFound(Pid &&pid);
 };
 
 }  // namespace stubs
 }  // namespace mpsync
+
+#endif  // MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_

@@ -11,4 +11,9 @@ find_package(nlohmann_json REQUIRED)
 # ##################################################################################################
 # Build project
 # ##################################################################################################
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
 add_subdirectory(src)
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif()

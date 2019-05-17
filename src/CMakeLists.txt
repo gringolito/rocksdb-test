@@ -1,6 +1,8 @@
-include_directories(${CMAKE_SOURCE_DIR}/include)
-
 add_subdirectory(lib)
+
+if(MPSYNC_BUILD_STUBS)
+    add_subdirectory(stubs)
+endif()
 
 add_executable(put-db put.cc)
 set_target_properties(put-db PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
