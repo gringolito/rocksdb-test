@@ -8,10 +8,16 @@
 // ----------------------------------------------------------------------------
 #include "utils/dir.h"
 
+#include <set>
+#include <functional>
+
 #include <sys/stat.h>
 
 namespace mpsync {
 namespace utils {
+
+/* Create directories with 0775 permitions */
+constexpr uint32_t kDefaultDirectoryCreateMode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 
 bool Dir::Exists(const std::string &path)
 {
@@ -24,7 +30,32 @@ bool Dir::Exists(const std::string &path)
 
 bool Dir::Create(const std::string &path)
 {
-    return mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
+    std::set<std::string> create_paths_stack = { path };
+
+    /* Find first existing path in tree to start creating for it */
+    auto parent_path = path.substr(0, path.find_last_of('/'));
+    while (!Exists(parent_path)) {
+        create_paths_stack.insert(parent_path);
+        parent_path = path.substr(0, parent_path.find_last_of('/'));
+    }
+
+    for (const auto &create_path : create_paths_stack) {
+        if (Exists(create_path)) {
+            /* Ignore if path is already create by another MakeDirectory() call.
+             * If we receive double slashed paths or relative paths this will happen. */
+            continue;
+        }
+        if (!MakeDirectory(create_path, kDefaultDirectoryCreateMode)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Dir::MakeDirectory(const std::string &path, uint32_t mode)
+{
+    return mkdir(path.c_str(), mode) == 0;
 }
 
 }  // namespace utils

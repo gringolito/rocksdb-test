@@ -28,7 +28,15 @@ bool File::Exists(const std::string &file)
 
 bool File::Create(const std::string &file)
 {
+    std::string path;
+
     auto base = file.find_last_of('/');
+    if (base == file.npos) {
+        path = ".";
+    } else {
+        path = file.substr(0, base);
+    }
+
     return Create(file.substr(0, base), file.substr(base + 1));
 }
 

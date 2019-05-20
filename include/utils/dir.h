@@ -19,6 +19,9 @@ class Dir {
    public:
     static bool Exists(const std::string &path);
     static bool Create(const std::string &path);
+
+   private:
+    static bool MakeDirectory(const std::string &path, uint32_t mode);
 };
 
 }  // namespace utils

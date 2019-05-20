@@ -7,4 +7,5 @@ PointerAlignment: Right
 ColumnLimit: 100
 BreakBeforeBraces: Stroustrup
 AllowShortFunctionsOnASingleLine: false
+Cpp11BracedListStyle: false
 ...
