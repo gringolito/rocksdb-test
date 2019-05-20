@@ -31,6 +31,11 @@ class Client final {
         delete mw_;
     }
 
+    void Loop() {
+        bool keeprunning = true;
+        mw_->LoopWhile(&keeprunning);
+    }
+
    private:
     Middleware *mw_;
     Sync *sync_;
@@ -41,6 +46,9 @@ class Client final {
 
 int main() {
     auto *client = new mpsync::test::Client();
+
+    client->Loop();
+
     delete client;
     return 0;
 }

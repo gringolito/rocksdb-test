@@ -8,13 +8,17 @@
 // ----------------------------------------------------------------------------
 #include "stubs/middleware.h"
 
-#include <sys/inotify.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <cstdio>
 #include <cassert>
+#include <poll.h>
 
+#include <algorithm>
 #include <fstream>
+#include <vector>
+
+#include <sys/inotify.h>
+#include <sys/types.h>
 
 namespace mpsync {
 namespace stubs {
@@ -83,24 +87,28 @@ void Middleware::RegisterToServer(const ProcessSignature &server_signature,
 
 void Middleware::SubscribeToFdEvents(int fd, OnFdEventCb on_fd_event)
 {
-    fd_callbacks_[fd] = on_fd_event;
-    // add to poll fds
+    fd_callbacks_[fd] = [fd, on_fd_event]() { on_fd_event(fd); };
+    poll_fds_.insert(fd);
 }
 
 void Middleware::UnsubscribeFromFdEvents(int fd)
 {
     auto fd_search = fd_callbacks_.find(fd);
     if (fd_search != fd_callbacks_.end()) {
-        // remove from poll fds
+        poll_fds_.erase(fd);
         fd_callbacks_.erase(fd_search);
     }
 }
 
-void Middleware::LoopWhile(bool *keeprunning)
+bool Middleware::LoopWhile(bool *keeprunning)
 {
     while (*keeprunning) {
-        // poll();
+        if (!Poll()) {
+            return false;
+        }
     }
+
+    return true;
 }
 
 void Middleware::WatchServerPid()
@@ -193,6 +201,44 @@ void Middleware::ServerFound(Pid &&pid)
     if (on_server_found_cb_) {
         on_server_found_cb_(server_pid_);
     }
+}
+
+bool Middleware::Poll()
+{
+    std::vector<pollfd> fds;
+    fds.resize(poll_fds_.size());
+
+    std::transform(poll_fds_.begin(), poll_fds_.end(), fds.begin(), [](int fd) -> pollfd {
+        return pollfd{.fd = fd, .events = POLLIN | POLLPRI, .revents = 0};
+    });
+
+    int ret = poll(fds.data(), fds.size(), -1 /* no timeout */);
+    if (ret < 0) {
+        return false;
+    }
+
+    for (const auto &fd : fds) {
+        if (!ProcessPollEvent(&fd)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Middleware::ProcessPollEvent(const pollfd *fd)
+{
+    /** Process input events in fd */
+    if (fd->revents & (POLLIN | POLLPRI)) {
+        fd_callbacks_.at(fd->fd)();
+    }
+
+    /** Process errors in fd */
+    if (fd->revents & (POLLERR | POLLHUP | POLLNVAL)) {
+        return false;
+    }
+
+    return true;
 }
 
 }  // namespace stubs

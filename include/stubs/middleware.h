@@ -11,10 +11,12 @@
 #define MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
 
 #include <unordered_map>
+#include <set>
 
 #include "mpsync/middleware.h"
 
 struct inotify_event;  //!< Forward declaration
+struct pollfd; //!< Forward declaration
 
 namespace mpsync {
 namespace stubs {
@@ -30,7 +32,7 @@ class Middleware final : public mpsync::Middleware {
                           OnServerLostCb on_server_lost_event) override;
     void SubscribeToFdEvents(int fd, OnFdEventCb on_fd_event) override;
     void UnsubscribeFromFdEvents(int fd) override;
-    void LoopWhile(bool *keeprunning) override;
+    bool LoopWhile(bool *keeprunning) override;
 
    private:
     ProcessSignature myself_;
@@ -42,7 +44,8 @@ class Middleware final : public mpsync::Middleware {
     int watch_;
     bool server_is_found_;
     bool server_published_;
-    std::unordered_map<int, OnFdEventCb> fd_callbacks_;
+    std::unordered_map<int, std::function<void()>> fd_callbacks_;
+    std::set<int> poll_fds_;
 
     void WatchServerPid();
     void ReadInotifyEvent(int watch);
@@ -50,6 +53,8 @@ class Middleware final : public mpsync::Middleware {
     Pid ReadPid();
     void ServerLost();
     void ServerFound(Pid &&pid);
+    bool Poll();
+    bool ProcessPollEvent(const pollfd *fd);
 };
 
 }  // namespace stubs

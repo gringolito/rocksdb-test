@@ -30,7 +30,7 @@ class Middleware {
                                   OnServerLostCb on_server_lost_event) = 0;
     virtual void SubscribeToFdEvents(int fd, OnFdEventCb on_fd_event) = 0;
     virtual void UnsubscribeFromFdEvents(int fd) = 0;
-    virtual void LoopWhile(bool *keeprunning) = 0;
+    virtual bool LoopWhile(bool *keeprunning) = 0;
 };
 
 }  // namespace mpsync
