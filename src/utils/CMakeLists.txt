@@ -1,0 +1,1 @@
+add_library(utils OBJECT file.cc dir.cc)

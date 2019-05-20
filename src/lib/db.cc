@@ -1,4 +1,4 @@
-// Copyright © 2019 Filipe Utzig <filipeutzig@gmail.com>
+// Copyright (c) 2019 Filipe Utzig <filipeutzig@gmail.com>
 //
 // ----------------------------------------------------------------------------
 // "THE BEER-WARE LICENSE" (Revision 42):
@@ -8,17 +8,19 @@
 // ----------------------------------------------------------------------------
 #include "mpsync/db.h"
 
-#include <sys/stat.h>
 #include <cassert>
 #include <iostream>
 
 #include "rocksdb/db.h"
+#include "utils/dir.h"
 
 namespace mpsync {
 
 DB::DB(const std::string &db_name, const Options &options)
 {
-    mkdir(kDBBasePath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    if (!utils::Dir::Exists(kDBBasePath)) {
+        assert(utils::Dir::Create(kDBBasePath));
+    }
 
     switch (options.operation_mode) {
         case OperationMode::Master:

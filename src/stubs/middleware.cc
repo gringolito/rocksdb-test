@@ -1,4 +1,4 @@
-// Copyright Â© 2019 Filipe Utzig <filipeutzig@gmail.com>
+// Copyright (c) 2019 Filipe Utzig <filipeutzig@gmail.com>
 //
 // ----------------------------------------------------------------------------
 // "THE BEER-WARE LICENSE" (Revision 42):
@@ -19,6 +19,8 @@
 
 #include <sys/inotify.h>
 #include <sys/types.h>
+
+#include "utils/file.h"
 
 namespace mpsync {
 namespace stubs {
@@ -115,7 +117,13 @@ void Middleware::WatchServerPid()
 {
     inotify_ = inotify_init1(IN_NONBLOCK);
     assert(inotify_ > 0);
-    watch_ = inotify_add_watch(inotify_, std::string(kPidPath + listening_server_._name).c_str(),
+
+    std::string pid_file(kPidPath + listening_server_._name);
+    if (!utils::File::Exists(pid_file)) {
+        assert(utils::File::Create(kPidPath, listening_server_._name));
+    }
+
+    watch_ = inotify_add_watch(inotify_, pid_file.c_str(),
                                IN_MODIFY | IN_CREATE | IN_DELETE_SELF);
     assert(watch_ > 0);
 

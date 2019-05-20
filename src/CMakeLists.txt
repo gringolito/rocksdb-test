@@ -1,3 +1,4 @@
+add_subdirectory(utils)
 add_subdirectory(lib)
 
 if(MPSYNC_BUILD_STUBS)
