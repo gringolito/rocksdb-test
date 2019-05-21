@@ -15,17 +15,15 @@
 namespace mpsync {
 namespace test {
 
-class Client final {
+class Server final {
    public:
-    Client()
+    Server()
     {
         mw_ = new stubs::Middleware();
-        sync_ = new SyncClient(mw_, kTestProcess);
-        sync_->RegisterServerFound([this](const Pid &p) { printf("ServerFound(%d)\n", p._pid); });
-        sync_->RegisterServerLost([this](const Pid &p) { printf("ServerLost(%d)\n", p._pid); });
+        sync_ = new SyncServer(mw_, kTestProcess);
     }
 
-    ~Client()
+    ~Server()
     {
         delete sync_;
         delete mw_;
@@ -39,7 +37,7 @@ class Client final {
 
    private:
     Middleware *mw_;
-    SyncClient *sync_;
+    SyncServer *sync_;
 };
 
 }  // namespace test
@@ -47,10 +45,10 @@ class Client final {
 
 int main()
 {
-    auto *client = new mpsync::test::Client();
+    auto *server = new mpsync::test::Server();
 
-    client->Loop();
+    server->Loop();
 
-    delete client;
+    delete server;
     return 0;
 }

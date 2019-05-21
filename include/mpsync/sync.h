@@ -1,4 +1,4 @@
-// Copyright © 2019 Filipe Utzig <filipeutzig@gmail.com>
+// Copyright (c) 2019 Filipe Utzig <filipeutzig@gmail.com>
 //
 // ----------------------------------------------------------------------------
 // "THE BEER-WARE LICENSE" (Revision 42):
@@ -18,29 +18,53 @@ namespace mpsync {
 
 class DB;  //!< Forward declaration
 
-class Sync final {
+class Sync {
    public:
-    explicit Sync(Middleware *mw, ProcessSignature process);
-    ~Sync();
-
-    void RegisterServerFound(OnServerFoundCb on_server_found_event);
-    void UnregisterServerFound();
-    void RegisterServerLost(OnServerLostCb on_server_lost_event);
-    void UnregisterServerLost();
+    Sync(Middleware *mw, ProcessSignature process, bool db_owner);
+    virtual ~Sync();
 
     const Sync &operator=(const Sync &) = delete;
     Sync &&operator=(Sync &&) = delete;
     Sync(const Sync &) = delete;
     Sync(Sync &&) = delete;
 
-   private:
+   protected:
     Middleware *mw_;
     DB *db_;
+};
+
+class SyncClient final : public Sync {
+   public:
+    SyncClient(Middleware *mw, ProcessSignature process);
+    ~SyncClient();
+
+    void RegisterServerFound(OnServerFoundCb on_server_found_event);
+    void UnregisterServerFound();
+    void RegisterServerLost(OnServerLostCb on_server_lost_event);
+    void UnregisterServerLost();
+
+    const SyncClient &operator=(const SyncClient &) = delete;
+    SyncClient &&operator=(SyncClient &&) = delete;
+    SyncClient(const SyncClient &) = delete;
+    SyncClient(SyncClient &&) = delete;
+
+   private:
     OnServerFoundCb on_server_found_cb_;
     OnServerLostCb on_server_lost_cb_;
 
     void OnServerFoundEvent(const Pid &pid);
     void OnServerLostEvent(const Pid &pid);
+};
+
+class SyncServer final : public Sync {
+   public:
+    SyncServer(Middleware *mw, ProcessSignature process);
+    ~SyncServer();
+
+    const SyncServer &operator=(const SyncServer &) = delete;
+    SyncServer &&operator=(SyncServer &&) = delete;
+    SyncServer(const SyncServer &) = delete;
+    SyncServer(SyncServer &&) = delete;
 };
 
 }  // namespace mpsync

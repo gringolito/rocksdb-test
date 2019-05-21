@@ -12,16 +12,14 @@
 
 namespace mpsync {
 
-Sync::Sync(Middleware *mw, ProcessSignature process, bool db_owner) : mw_(mw)
+SyncServer::SyncServer(Middleware *mw, ProcessSignature process) : Sync(mw, process, false)
 {
-    DB::Options options;
-    options.operation_mode = db_owner ? DB::OperationMode::Master : DB::OperationMode::Slave;
-    db_ = new DB(process._name, options);
+    mw_->PublishServer(process);
 }
 
-Sync::~Sync()
+SyncServer::~SyncServer()
 {
-    delete db_;
+    mw_->UnpublishServer();
 }
 
 }  // namespace mpsync
