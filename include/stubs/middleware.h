@@ -10,8 +10,9 @@
 #ifndef MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
 #define MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
 
-#include <unordered_map>
+#include <fstream>
 #include <set>
+#include <unordered_map>
 
 #include "mpsync/middleware.h"
 
@@ -40,16 +41,19 @@ class Middleware final : public mpsync::Middleware {
     OnServerFoundCb on_server_found_cb_;
     OnServerLostCb on_server_lost_cb_;
     Pid server_pid_;
+    std::ofstream server_pid_file_;
     int inotify_;
     int watch_;
     bool server_is_found_;
     bool server_published_;
+    bool first_poll_call_;
     std::unordered_map<int, std::function<void()>> fd_callbacks_;
     std::set<int> poll_fds_;
 
     void WatchServerPid();
-    void ReadInotifyEvent(int watch);
+    void ReadInotifyEvent();
     void ProcessInotifyEvent(const inotify_event *event);
+    void ProcessPidFileEvent();
     Pid ReadPid();
     void ServerLost();
     void ServerFound(Pid &&pid);
