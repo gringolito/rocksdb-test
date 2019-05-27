@@ -7,8 +7,8 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#ifndef MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
-#define MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
+#ifndef MPSYNC_INCLUDE_STUBS_LINUX_MIDDLEWARE_H_
+#define MPSYNC_INCLUDE_STUBS_LINUX_MIDDLEWARE_H_
 
 #include <fstream>
 #include <set>
@@ -16,12 +16,8 @@
 
 #include "mpsync/middleware.h"
 
-struct pollfd;  //!< Forward declaration
-
-namespace fsw {
-class event;    //!< Forward declaration
-class monitor;  //!< Forward declaration
-}  // namespace fsw
+struct inotify_event;  //!< Forward declaration
+struct pollfd; //!< Forward declaration
 
 namespace mpsync {
 namespace stubs {
@@ -46,16 +42,17 @@ class Middleware final : public mpsync::Middleware {
     OnServerLostCb on_server_lost_cb_;
     Pid server_pid_;
     std::ofstream server_pid_file_;
-    fsw::monitor *monitor_;
+    int inotify_;
+    int watch_;
     bool server_is_found_;
     bool server_published_;
     bool first_poll_call_;
     std::unordered_map<int, std::function<void()>> fd_callbacks_;
     std::set<int> poll_fds_;
 
-    static void FswatchCb(const std::vector<fsw::event> &events, void *cookie);
     void WatchServerPid();
-    void ProcessMonitorEvents(const std::vector<fsw::event> &events);
+    void ReadInotifyEvent();
+    void ProcessInotifyEvent(const inotify_event *event);
     void ProcessPidFileEvent();
     Pid ReadPid();
     void ServerLost();
@@ -67,4 +64,4 @@ class Middleware final : public mpsync::Middleware {
 }  // namespace stubs
 }  // namespace mpsync
 
-#endif  // MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
+#endif  // MPSYNC_INCLUDE_STUBS_LINUX_MIDDLEWARE_H_

@@ -6,19 +6,18 @@
 // you can do whatever you want with this stuff. If we meet some day, and you
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
-#include "stubs/middleware.h"
+#include "stubs/linux/middleware.h"
 
-#include <poll.h>
 #include <unistd.h>
-#include <cassert>
 #include <cstdio>
+#include <cassert>
+#include <poll.h>
 
 #include <algorithm>
 #include <vector>
 
+#include <sys/inotify.h>
 #include <sys/types.h>
-
-#include "libfswatch/c++/monitor_factory.hpp"
 
 #include "utils/file.h"
 
@@ -33,7 +32,8 @@ Middleware::Middleware()
       on_server_found_cb_(nullptr),
       on_server_lost_cb_(nullptr),
       server_pid_({}),
-      monitor_(nullptr),
+      inotify_(0),
+      watch_(0),
       server_is_found_(false),
       server_published_(false),
       first_poll_call_(true)
@@ -49,8 +49,12 @@ Middleware::~Middleware()
         UnpublishServer();
     }
 
-    if (monitor_) {
-        delete monitor_;
+    if (watch_ > 0) {
+        inotify_rm_watch(inotify_, watch_);
+        close(watch_);
+    }
+    if (inotify_ > 0) {
+        close(inotify_);
     }
 }
 
@@ -122,49 +126,65 @@ bool Middleware::LoopWhile(bool *keeprunning)
     return true;
 }
 
-void Middleware::FswatchCb(const std::vector<fsw::event> &events, void *cookie)
-{
-    auto self = static_cast<Middleware *>(cookie);
-    self->ProcessMonitorEvents(events);
-}
-
 void Middleware::WatchServerPid()
 {
     printf("%s()\n", __func__);
+
+    inotify_ = inotify_init1(IN_NONBLOCK);
+    assert(inotify_ > 0);
 
     std::string pid_file(kPidPath + listening_server_._name);
     if (!utils::File::Exists(pid_file)) {
         assert(utils::File::Create(kPidPath, listening_server_._name));
     }
 
-    // std::function<void(const std::vector<fsw::event> &, void *)> callback =
-    // [this](const std::vector<fsw::event> &e, void *) { ProcessMonitorEvents(e); };
-    // monitor_ = fsw::monitor_factory::create_monitor(
-    // fsw_monitor_type::system_default_monitor_type, { pid_file },
-    // callback.target<void(const std::vector<fsw::event> &, void *)>());
-    monitor_ = fsw::monitor_factory::create_monitor(fsw_monitor_type::system_default_monitor_type,
-                                                    { pid_file }, &Middleware::FswatchCb);
-    assert(monitor_);
-    monitor_->start();
+    printf("inotify_add_watch(%s)\n", pid_file.c_str());
+    watch_ = inotify_add_watch(inotify_, pid_file.c_str(),
+                               IN_MODIFY | IN_CREATE | IN_DELETE_SELF | IN_CLOSE_WRITE);
+    assert(watch_ > 0);
+
+    SubscribeToFdEvents(inotify_, [this](int) { ReadInotifyEvent(); });
 }
 
-void Middleware::ProcessMonitorEvents(const std::vector<fsw::event> &events)
+void Middleware::ReadInotifyEvent()
 {
     printf("%s()\n", __func__);
 
-    for (const auto &event : events) {
-        auto flags = event.get_flags();
-        for (const auto &flag : flags) {
-            if (flag & (Created | Updated)) {
-                ProcessPidFileEvent();
-            }
-            else if (flag & (Removed /* | Link */)) {
-                ServerLost();
-            }
-            else {
-                printf("%s() flag=%#x\n", __func__, flag);
+    ssize_t size;
+    const char *ptr;
+    char buffer[BUFSIZ] __attribute__((aligned(__alignof__(inotify_event))));
+
+    do {
+        size = read(inotify_, buffer, sizeof buffer);
+        if (size == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                // No more events to read
+                break;
+            } else {
+                perror("Failed to read inotify event");
+                abort();
             }
         }
+
+        const inotify_event *event;
+        const char *buffer_end = buffer + size;
+        for (ptr = buffer; ptr < buffer_end; ptr += sizeof(*event) + event->len) {
+            event = reinterpret_cast<const inotify_event *>(ptr);
+            if (event->wd == watch_) {
+                ProcessInotifyEvent(event);
+            }
+        }
+    } while (size > 0);
+}
+
+void Middleware::ProcessInotifyEvent(const inotify_event *event)
+{
+    printf("%s()\n", __func__);
+
+    if (event->mask & (IN_CREATE | IN_MODIFY)) {
+        ProcessPidFileEvent();
+    } else if (event->mask & (IN_DELETE_SELF | IN_CLOSE_WRITE)) {
+        ServerLost();
     }
 }
 
@@ -181,8 +201,7 @@ void Middleware::ProcessPidFileEvent()
             ServerLost();
         }
         ServerFound(std::move(pid));
-    }
-    else {
+    } else {
         ServerLost();
     }
 }
