@@ -9,6 +9,7 @@
 #include "stubs/middleware.h"
 
 #include <poll.h>
+#include <signal.h>
 #include <unistd.h>
 #include <cassert>
 #include <cstdio>
@@ -123,6 +124,8 @@ bool Middleware::LoopWhile(bool *keeprunning)
 
 void Middleware::ProcessPidFileEvent()
 {
+    printf("%s()\n", __func__);
+
     auto pid = ReadPid();
     if (pid._pid != 0) {
         if (server_pid_._pid == pid._pid) {
@@ -134,11 +137,19 @@ void Middleware::ProcessPidFileEvent()
             ServerLost();
         }
 
-        /* TODO: Verify if the readed PID is still alive before notify ServerFound */
-        ServerFound(std::move(pid));
+        if (PidIsAlive(pid)) {
+            ServerFound(std::move(pid));
+        }
     } else {
         ServerLost();
     }
+}
+
+bool Middleware::PidIsAlive(const Pid &pid)
+{
+    printf("%s(%zu)\n", __func__, pid._pid);
+
+    return !(kill(pid._pid, 0) == -1 && errno == ESRCH);
 }
 
 Pid Middleware::ReadPid()

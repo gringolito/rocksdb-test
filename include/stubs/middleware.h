@@ -55,6 +55,7 @@ class Middleware : public mpsync::Middleware {
     std::unordered_map<int, std::function<void()>> fd_callbacks_;
     std::set<int> poll_fds_;
 
+    bool PidIsAlive(const Pid& pid);
     Pid ReadPid();
     void ServerFound(Pid &&pid);
     bool Poll();
