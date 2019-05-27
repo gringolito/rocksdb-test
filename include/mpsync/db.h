@@ -1,4 +1,4 @@
-// Copyright © 2019 Filipe Utzig <filipeutzig@gmail.com>
+// Copyright (c) 2019 Filipe Utzig <filipeutzig@gmail.com>
 //
 // ----------------------------------------------------------------------------
 // "THE BEER-WARE LICENSE" (Revision 42):

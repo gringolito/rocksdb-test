@@ -1,4 +1,4 @@
-// Copyright © 2019 Filipe Utzig <filipeutzig@gmail.com>
+// Copyright (c) 2019 Filipe Utzig <filipeutzig@gmail.com>
 //
 // ----------------------------------------------------------------------------
 // "THE BEER-WARE LICENSE" (Revision 42):
@@ -21,8 +21,8 @@ class Client final {
     {
         mw_ = new stubs::Middleware();
         sync_ = new SyncClient(mw_, kTestProcess);
-        sync_->RegisterServerFound([this](const Pid &p) { printf("ServerFound(%d)\n", p._pid); });
-        sync_->RegisterServerLost([this](const Pid &p) { printf("ServerLost(%d)\n", p._pid); });
+        sync_->RegisterServerFound([](const Pid &p) { printf("ServerFound(%llu)\n", p._pid); });
+        sync_->RegisterServerLost([](const Pid &p) { printf("ServerLost(%llu)\n", p._pid); });
     }
 
     ~Client()

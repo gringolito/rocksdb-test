@@ -7,7 +7,7 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#ifndef MPSYNC_INCLUDE_UTILS_DIR_H
+#ifndef MPSYNC_INCLUDE_UTILS_DIR_H_
 #define MPSYNC_INCLUDE_UTILS_DIR_H_
 
 #include <string>
