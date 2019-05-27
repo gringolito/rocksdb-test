@@ -1,0 +1,1 @@
+install(DIRECTORY mpsync DESTINATION include)

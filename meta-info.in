@@ -1,0 +1,4 @@
+include_guard(GLOBAL)
+
+set(project_version 0.0.1)
+set(project_description "Simple RocksDB test application")
