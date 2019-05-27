@@ -18,18 +18,15 @@
 
 struct pollfd;  //!< Forward declaration
 
-namespace fsw {
-class event;    //!< Forward declaration
-class monitor;  //!< Forward declaration
-}  // namespace fsw
-
 namespace mpsync {
 namespace stubs {
 
-class Middleware final : public mpsync::Middleware {
+static const std::string kPidPath{ "/tmp/stubmw/pids/" };
+
+class Middleware : public mpsync::Middleware {
    public:
     Middleware();
-    ~Middleware();
+    virtual ~Middleware();
     void PublishServer(const ProcessSignature &server_signature) override;
     void UnpublishServer() override;
     void RegisterToServer(const ProcessSignature &server_signature,
@@ -39,26 +36,25 @@ class Middleware final : public mpsync::Middleware {
     void UnsubscribeFromFdEvents(int fd) override;
     bool LoopWhile(bool *keeprunning) override;
 
+   protected:
+    ProcessSignature listening_server_;
+    virtual void WatchServerPid() = 0;
+    void ProcessPidFileEvent();
+    void ServerLost();
+
    private:
     ProcessSignature myself_;
-    ProcessSignature listening_server_;
     OnServerFoundCb on_server_found_cb_;
     OnServerLostCb on_server_lost_cb_;
     Pid server_pid_;
     std::ofstream server_pid_file_;
-    fsw::monitor *monitor_;
     bool server_is_found_;
     bool server_published_;
     bool first_poll_call_;
     std::unordered_map<int, std::function<void()>> fd_callbacks_;
     std::set<int> poll_fds_;
 
-    static void FswatchCb(const std::vector<fsw::event> &events, void *cookie);
-    void WatchServerPid();
-    void ProcessMonitorEvents(const std::vector<fsw::event> &events);
-    void ProcessPidFileEvent();
     Pid ReadPid();
-    void ServerLost();
     void ServerFound(Pid &&pid);
     bool Poll();
     bool ProcessPollEvent(const pollfd *fd);

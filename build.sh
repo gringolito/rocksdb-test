@@ -2,19 +2,19 @@
 bin_name=$(basename "${0}")
 
 function print_help() {
-    echo -e "Usage: ${bin_name} [-v] [-h] [-l]"
+    echo -e "Usage: ${bin_name} [-v] [-h] [-d]"
     echo -e ""
     echo -e "Options:"
     echo -e "  -v        Turn make output verbose"
     echo -e "  -h        Print this help message"
-    echo -e "  -l        Use Linux specific stubs"
+    echo -e "  -d        Build project in debug mode"
     exit "${1}"
 }
 
-while getopts vhl OPT; do
+while getopts vhd OPT; do
     case "${OPT}" in
         v) verbose="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" ;;
-        l) stubs='-DMPSYNC_STUBS="linux"' ;;
+        d) debug="-DCMAKE_BUILD_TYPE=Debug" ;;
         h) print_help 0 ;;
         *) print_help 1 ;;
     esac
@@ -34,8 +34,14 @@ test -n "${fswatch_repo_installed}" || conan remote add bincrafters https://api.
 
 os=$(uname -s)
 case "${os}" in
-    Darwin) conan_options="-s compiler.libcxx=libc++" ;;
-    Linux) conan_options="-s compiler.libcxx=libstdc++11" ;;
+    Darwin)
+        conan_options="-s compiler.libcxx=libc++"
+        stubs="-DMPSYNC_STUBS=freebsd"
+        ;;
+    Linux)
+        conan_options="-s compiler.libcxx=libstdc++11"
+        stubs="-DMPSYNC_STUBS=linux"
+        ;;
     *) ;;
 esac
 
@@ -45,6 +51,6 @@ rm -f FindRocksDB.cmake # Remove unwantd Conan generated FindPackage
 ####################################################################################################
 # Build the project
 ####################################################################################################
-cmake -DCMAKE_TOOLCHAIN_FILE=conan_paths.cmake -DMPSYNC_BUILD_STUBS=yes ${stubs} -DBUILD_TESTING=yes ${verbose} ..
+cmake -DCMAKE_TOOLCHAIN_FILE=conan_paths.cmake ${debug} -DMPSYNC_BUILD_STUBS=yes ${stubs} -DBUILD_TESTING=yes ${verbose} ..
 cmake --build .
 cp compile_commands.json ..

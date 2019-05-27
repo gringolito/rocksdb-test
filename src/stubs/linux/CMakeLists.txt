@@ -1,5 +1,0 @@
-add_library(linux_stubs OBJECT)
-target_sources(linux_stubs PRIVATE middleware.cc)
-target_include_directories(linux_stubs PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_compile_options(linux_stubs PRIVATE -Wall -Wextra -Werror)
-target_compile_features(linux_stubs PUBLIC cxx_std_11)

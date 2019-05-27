@@ -16,24 +16,15 @@
 #include <algorithm>
 #include <vector>
 
-#include <sys/types.h>
-
-#include "libfswatch/c++/monitor_factory.hpp"
-
-#include "utils/file.h"
-
 namespace mpsync {
 namespace stubs {
 
-static const std::string kPidPath{ "/tmp/stubmw/pids/" };
-
 Middleware::Middleware()
-    : myself_({}),
-      listening_server_({}),
+    : listening_server_({}),
+      myself_({}),
       on_server_found_cb_(nullptr),
       on_server_lost_cb_(nullptr),
       server_pid_({}),
-      monitor_(nullptr),
       server_is_found_(false),
       server_published_(false),
       first_poll_call_(true)
@@ -47,10 +38,6 @@ Middleware::~Middleware()
 
     if (server_published_) {
         UnpublishServer();
-    }
-
-    if (monitor_) {
-        delete monitor_;
     }
 }
 
@@ -122,52 +109,6 @@ bool Middleware::LoopWhile(bool *keeprunning)
     return true;
 }
 
-void Middleware::FswatchCb(const std::vector<fsw::event> &events, void *cookie)
-{
-    auto self = static_cast<Middleware *>(cookie);
-    self->ProcessMonitorEvents(events);
-}
-
-void Middleware::WatchServerPid()
-{
-    printf("%s()\n", __func__);
-
-    std::string pid_file(kPidPath + listening_server_._name);
-    if (!utils::File::Exists(pid_file)) {
-        assert(utils::File::Create(kPidPath, listening_server_._name));
-    }
-
-    // std::function<void(const std::vector<fsw::event> &, void *)> callback =
-    // [this](const std::vector<fsw::event> &e, void *) { ProcessMonitorEvents(e); };
-    // monitor_ = fsw::monitor_factory::create_monitor(
-    // fsw_monitor_type::system_default_monitor_type, { pid_file },
-    // callback.target<void(const std::vector<fsw::event> &, void *)>());
-    monitor_ = fsw::monitor_factory::create_monitor(fsw_monitor_type::system_default_monitor_type,
-                                                    { pid_file }, &Middleware::FswatchCb);
-    assert(monitor_);
-    monitor_->start();
-}
-
-void Middleware::ProcessMonitorEvents(const std::vector<fsw::event> &events)
-{
-    printf("%s()\n", __func__);
-
-    for (const auto &event : events) {
-        auto flags = event.get_flags();
-        for (const auto &flag : flags) {
-            if (flag & (Created | Updated)) {
-                ProcessPidFileEvent();
-            }
-            else if (flag & (Removed /* | Link */)) {
-                ServerLost();
-            }
-            else {
-                printf("%s() flag=%#x\n", __func__, flag);
-            }
-        }
-    }
-}
-
 void Middleware::ProcessPidFileEvent()
 {
     auto pid = ReadPid();
@@ -181,8 +122,7 @@ void Middleware::ProcessPidFileEvent()
             ServerLost();
         }
         ServerFound(std::move(pid));
-    }
-    else {
+    } else {
         ServerLost();
     }
 }

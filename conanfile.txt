@@ -1,7 +1,6 @@
 [requires]
 jsonformoderncpp/3.6.1@vthiery/stable
 RocksDB/5.18.3@koeleck/stable
-fswatch/1.14.0@bincrafters/stable
 gtest/1.8.1@bincrafters/stable
 
 [generators]
