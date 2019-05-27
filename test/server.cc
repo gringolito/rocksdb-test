@@ -8,7 +8,7 @@
 // ----------------------------------------------------------------------------
 
 #include "mpsync/sync.h"
-#include "stubs/linux/middleware.h"
+#include "stubs/middleware.h"
 
 #include "common.h"
 
@@ -19,7 +19,7 @@ class Server final {
    public:
     Server()
     {
-        mw_ = new stubs::LinuxMiddleware();
+        mw_ = stubs::Middleware::Build();
         sync_ = new SyncServer(mw_, kTestProcess);
     }
 

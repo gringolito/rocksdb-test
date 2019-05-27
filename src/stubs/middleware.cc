@@ -16,8 +16,20 @@
 #include <algorithm>
 #include <vector>
 
+#include "stubs/linux/middleware.h"
+
 namespace mpsync {
 namespace stubs {
+
+Middleware *Middleware::Build()
+{
+#ifdef MPSYNC_STUBS_LINUX
+    return new LinuxMiddleware();
+#else
+#warning "No stub middleware definition found, stub application may not run."
+    return nullptr;
+#endif
+}
 
 Middleware::Middleware()
     : listening_server_({}),
@@ -121,6 +133,8 @@ void Middleware::ProcessPidFileEvent()
         if (server_pid_._pid != 0) {
             ServerLost();
         }
+
+        /* TODO: Verify if the readed PID is still alive before notify ServerFound */
         ServerFound(std::move(pid));
     } else {
         ServerLost();

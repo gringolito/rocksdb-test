@@ -8,7 +8,7 @@
 // ----------------------------------------------------------------------------
 
 #include "mpsync/sync.h"
-#include "stubs/linux/middleware.h"
+#include "stubs/middleware.h"
 
 #include "common.h"
 
@@ -19,7 +19,7 @@ class Client final {
    public:
     Client()
     {
-        mw_ = new stubs::LinuxMiddleware();
+        mw_ = stubs::Middleware::Build();
         sync_ = new SyncClient(mw_, kTestProcess);
         sync_->RegisterServerFound([](const Pid &p) { printf("ServerFound(%zu)\n", p._pid); });
         sync_->RegisterServerLost([](const Pid &p) { printf("ServerLost(%zu)\n", p._pid); });

@@ -25,7 +25,7 @@ static const std::string kPidPath{ "/tmp/stubmw/pids/" };
 
 class Middleware : public mpsync::Middleware {
    public:
-    Middleware();
+    static Middleware *Build();
     virtual ~Middleware();
     void PublishServer(const ProcessSignature &server_signature) override;
     void UnpublishServer() override;
@@ -37,6 +37,7 @@ class Middleware : public mpsync::Middleware {
     bool LoopWhile(bool *keeprunning) override;
 
    protected:
+    Middleware();
     ProcessSignature listening_server_;
     virtual void WatchServerPid() = 0;
     void ProcessPidFileEvent();
