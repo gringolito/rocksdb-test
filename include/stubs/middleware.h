@@ -15,6 +15,7 @@
 #include <unordered_map>
 
 #include "mpsync/middleware.h"
+#include "stubs/message_queue.h"
 
 struct pollfd;  //!< Forward declaration
 
@@ -27,14 +28,16 @@ class Middleware : public mpsync::Middleware {
    public:
     static Middleware *Build();
     virtual ~Middleware();
-    void PublishServer(const ProcessSignature &server_signature) override;
-    void UnpublishServer() override;
-    void RegisterToServer(const ProcessSignature &server_signature,
-                          OnServerFoundCb on_server_found_event,
-                          OnServerLostCb on_server_lost_event) override;
-    void SubscribeToFdEvents(int fd, OnFdEventCb on_fd_event) override;
-    void UnsubscribeFromFdEvents(int fd) override;
-    bool LoopWhile(bool *keeprunning) override;
+    void PublishServer(const ProcessSignature &server_signature) final;
+    void UnpublishServer() final;
+    void SubscribeToServer(const ProcessSignature &server_signature,
+                           OnServerFoundCb on_server_found_event,
+                           OnServerLostCb on_server_lost_event) final;
+    void SubscribeToFdEvents(int fd, OnFdEventCb on_fd_event) final;
+    void UnsubscribeFromFdEvents(int fd) final;
+    bool LoopWhile(bool *keeprunning) final;
+    void SendSignal(const Pid &pid, const Signal &signal, const std::string &content) final;
+    void RegisterToSignal(const Signal &signal, OnSignalReceivedCb on_signal_received) final;
 
    protected:
     Middleware();
@@ -47,15 +50,16 @@ class Middleware : public mpsync::Middleware {
     ProcessSignature myself_;
     OnServerFoundCb on_server_found_cb_;
     OnServerLostCb on_server_lost_cb_;
+    Pid me_;
     Pid server_pid_;
     std::ofstream server_pid_file_;
     bool server_is_found_;
     bool server_published_;
     bool first_poll_call_;
     std::unordered_map<int, std::function<void()>> fd_callbacks_;
+    std::unordered_map<Signal, MessageQueue> signal_queues_;
     std::set<int> poll_fds_;
-
-    bool PidIsAlive(const Pid& pid);
+    bool PidIsAlive(const Pid &pid);
     Pid ReadPid();
     void ServerFound(Pid &&pid);
     bool Poll();

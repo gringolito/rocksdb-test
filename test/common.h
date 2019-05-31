@@ -11,6 +11,17 @@
 #define MPSYNC_TEST_COMMON_H_
 
 #include "mpsync/pid.h"
-static const mpsync::ProcessSignature kTestProcess{._name = "test", ._signature = nullptr};
+#include "mpsync/signal.h"
+
+namespace mpsync {
+
+static const ProcessSignature kTestProcess{ ._name = "test", ._signature = nullptr };
+
+static const Signal kSignalName{ ._name = "name", ._signature = nullptr };
+static const Signal kSignalPosition{ ._name = "position", ._signature = nullptr };
+static const Signal kSignalTimes{ ._name = "times", ._signature = nullptr };
+static const Signal kSignalValid{ ._name = "valid", ._signature = nullptr };
+
+}  // namespace mpsync
 
 #endif  // MPSYNC_TEST_COMMON_H_

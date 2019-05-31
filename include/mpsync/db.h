@@ -18,7 +18,7 @@ class DB; /*!< Forward declaration */
 
 namespace mpsync {
 
-static const std::string kDBBasePath = "/tmp/dbs/";
+static const std::string kDBBasePath = "/tmp/mpsync/dbs/";
 
 class DB final {
    public:

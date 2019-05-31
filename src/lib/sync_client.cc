@@ -14,8 +14,8 @@ namespace mpsync {
 
 SyncClient::SyncClient(Middleware *mw, ProcessSignature process) : Sync(mw, process, true)
 {
-    mw_->RegisterToServer(process, [this](const Pid &p) { OnServerFoundEvent(p); },
-                          [this](const Pid &p) { OnServerLostEvent(p); });
+    mw_->SubscribeToServer(process, [this](Pid &&p) { OnServerFoundEvent(std::move(p)); },
+                           [this](Pid &&p) { OnServerLostEvent(std::move(p)); });
 }
 
 SyncClient::~SyncClient()
@@ -42,17 +42,17 @@ void SyncClient::UnregisterServerLost()
     on_server_lost_cb_ = nullptr;
 }
 
-void SyncClient::OnServerFoundEvent(const Pid &pid)
+void SyncClient::OnServerFoundEvent(Pid &&pid)
 {
     if (on_server_found_cb_) {
-        on_server_found_cb_(pid);
+        on_server_found_cb_(std::move(pid));
     }
 }
 
-void SyncClient::OnServerLostEvent(const Pid &pid)
+void SyncClient::OnServerLostEvent(Pid &&pid)
 {
     if (on_server_lost_cb_) {
-        on_server_lost_cb_(pid);
+        on_server_lost_cb_(std::move(pid));
     }
 }
 

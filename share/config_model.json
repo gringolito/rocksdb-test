@@ -1,0 +1,9 @@
+{
+    "name": "string",
+    "position" : {
+        "x" : "int",
+        "y" : "int"
+    },
+    "times": [ "int" ],
+    "valid": "boolean"
+}

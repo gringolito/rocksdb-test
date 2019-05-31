@@ -6,6 +6,7 @@
 // you can do whatever you want with this stuff. If we meet some day, and you
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
+#include <iostream>
 
 #include "mpsync/sync.h"
 #include "stubs/middleware.h"
@@ -21,6 +22,9 @@ class Server final {
     {
         mw_ = stubs::Middleware::Build();
         sync_ = new SyncServer(mw_, kTestProcess);
+        mw_->RegisterToSignal(kSignalName, [](Pid &&pid, std::string &&message) {
+            std::cout << "Name set to: " << message << " by PID: " << pid._pid << std::endl;
+        });
     }
 
     ~Server()

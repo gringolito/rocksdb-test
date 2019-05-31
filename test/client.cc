@@ -6,6 +6,9 @@
 // you can do whatever you want with this stuff. If we meet some day, and you
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
+#include <unistd.h>
+
+#include <iostream>
 
 #include "mpsync/sync.h"
 #include "stubs/middleware.h"
@@ -21,8 +24,15 @@ class Client final {
     {
         mw_ = stubs::Middleware::Build();
         sync_ = new SyncClient(mw_, kTestProcess);
-        sync_->RegisterServerFound([](const Pid &p) { printf("ServerFound(%zu)\n", p._pid); });
-        sync_->RegisterServerLost([](const Pid &p) { printf("ServerLost(%zu)\n", p._pid); });
+        sync_->RegisterServerFound([this](Pid &&server) {
+            printf("ServerFound(%zu)\n", server._pid);
+            server_pid_ = server;
+        });
+        sync_->RegisterServerLost([this](Pid &&server) {
+            printf("ServerLost(%zu)\n", server._pid);
+            server_pid_ = {};
+        });
+        mw_->SubscribeToFdEvents(STDIN_FILENO, [this](int) { ReadCli(); });
     }
 
     ~Client()
@@ -40,6 +50,14 @@ class Client final {
    private:
     Middleware *mw_;
     SyncClient *sync_;
+    Pid server_pid_;
+
+    void ReadCli()
+    {
+        std::string command;
+        std::cin >> command;
+        mw_->SendSignal(server_pid_, kSignalName, command);
+    }
 };
 
 }  // namespace test

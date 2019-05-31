@@ -17,7 +17,7 @@ namespace mpsync {
 namespace utils {
 
 /* Create directories with 0775 permitions */
-constexpr uint32_t kDefaultDirectoryCreateMode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+constexpr mode_t kDefaultDirectoryCreateMode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 
 bool Dir::Exists(const std::string &path)
 {
@@ -53,8 +53,9 @@ bool Dir::Create(const std::string &path)
     return true;
 }
 
-bool Dir::MakeDirectory(const std::string &path, uint32_t mode)
+bool Dir::MakeDirectory(const std::string &path, mode_t mode)
 {
+    umask(0);
     return mkdir(path.c_str(), mode) == 0;
 }
 

@@ -52,8 +52,8 @@ class SyncClient final : public Sync {
     OnServerFoundCb on_server_found_cb_;
     OnServerLostCb on_server_lost_cb_;
 
-    void OnServerFoundEvent(const Pid &pid);
-    void OnServerLostEvent(const Pid &pid);
+    void OnServerFoundEvent(Pid &&pid);
+    void OnServerLostEvent(Pid &&pid);
 };
 
 class SyncServer final : public Sync {
