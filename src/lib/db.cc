@@ -8,10 +8,10 @@
 // ----------------------------------------------------------------------------
 #include "mpsync/db.h"
 
-#include <cassert>
 #include <iostream>
 
 #include "rocksdb/db.h"
+#include "utils/assert.h"
 #include "utils/dir.h"
 
 namespace mpsync {
@@ -19,12 +19,14 @@ namespace mpsync {
 DB::DB(const std::string &db_name, const Options &options)
 {
     if (!utils::Dir::Exists(kDBBasePath)) {
-        assert(utils::Dir::Create(kDBBasePath));
+        assert_debug(utils::Dir::Create(kDBBasePath), "Failed to create DB base directory (%s)",
+                     kDBBasePath.c_str());
     }
 
     switch (options.operation_mode) {
         case OperationMode::Master:
-            assert(OpenMasterMode(kDBBasePath + db_name));
+            assert_debug(OpenMasterMode(kDBBasePath + db_name),
+                         "Failed to open DB (%s) in master mode", db_name.c_str());
             break;
         case OperationMode::Slave:
             OpenSlaveMode(kDBBasePath + db_name);

@@ -9,14 +9,15 @@
 
 #include <unistd.h>
 
-#include <cassert>
 #include <iostream>
 
 #include "mpsync/db.h"
+#include "utils/assert.h"
 
 namespace mpsync {
 
-std::string CreateJson() {
+std::string CreateJson()
+{
     return "";
 }
 
@@ -26,8 +27,9 @@ void PutIntoDB(std::string &&key, std::string &&value)
     options.operation_mode = DB::OperationMode::Master;
     DB db("test", options);
 
-    assert(db.Put(key, value));
-    assert(db.Put("json", CreateJson()));
+    assert_debug(db.Put(key, value), "Put operation failed: %s = %s", key.c_str(), value.c_str());
+    assert_debug(db.Put("json", CreateJson()), "Put operation failed: %s = %s", "json",
+                 CreateJson().c_str());
 
     sleep(15);
     std::cout << " -- Releasing DB LOCK --" << std::endl;

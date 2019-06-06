@@ -7,7 +7,6 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#include <cassert>
 #include <iostream>
 
 #include "mpsync/db.h"

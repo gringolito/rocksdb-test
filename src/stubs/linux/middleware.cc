@@ -9,27 +9,24 @@
 #include "stubs/linux/middleware.h"
 
 #include <unistd.h>
-#include <cstdio>
-#include <cassert>
 
 #include <sys/inotify.h>
 
+#include "utils/assert.h"
+#include "utils/debug.h"
 #include "utils/file.h"
 
 namespace mpsync {
 namespace stubs {
 
-LinuxMiddleware::LinuxMiddleware()
-    : Middleware(),
-      inotify_(0),
-      watch_(0)
+LinuxMiddleware::LinuxMiddleware() : Middleware(), inotify_(0), watch_(0)
 {
-    printf("%s()\n", __func__);
+    debug_enter();
 }
 
 LinuxMiddleware::~LinuxMiddleware()
 {
-    printf("%s()\n", __func__);
+    debug_enter();
 
     if (watch_ > 0) {
         inotify_rm_watch(inotify_, watch_);
@@ -42,28 +39,28 @@ LinuxMiddleware::~LinuxMiddleware()
 
 void LinuxMiddleware::WatchServerPid()
 {
-    printf("%s()\n", __func__);
+    debug_enter();
 
     inotify_ = inotify_init1(IN_NONBLOCK);
-    assert(inotify_ > 0);
+    assert_errno(inotify_ > 0);
 
     std::string pid_file(kPidPath + listening_server_._name);
     if (!utils::File::Exists(pid_file)) {
-        assert(utils::File::Create(kPidPath, listening_server_._name));
+        assert_debug(utils::File::Create(kPidPath, listening_server_._name),
+                     "Failed to create server PID file");
     }
 
-    printf("inotify_add_watch(%s)\n", pid_file.c_str());
+    debug("inotify_add_watch(%s)", pid_file.c_str());
     watch_ = inotify_add_watch(inotify_, pid_file.c_str(),
                                IN_MODIFY | IN_CREATE | IN_DELETE_SELF | IN_CLOSE_WRITE);
-    assert(watch_ > 0);
+    assert_errno(watch_ > 0);
 
     SubscribeToFdEvents(inotify_, [this](int) { ReadInotifyEvent(); });
 }
 
 void LinuxMiddleware::ReadInotifyEvent()
 {
-    printf("%s()\n", __func__);
-
+    debug_enter();
     ssize_t size;
     const char *ptr;
     char buffer[BUFSIZ] __attribute__((aligned(__alignof__(inotify_event))));
@@ -75,8 +72,7 @@ void LinuxMiddleware::ReadInotifyEvent()
                 // No more events to read
                 break;
             } else {
-                perror("Failed to read inotify event");
-                abort();
+                fault_debug_errno("Failed to read inotify event");
             }
         }
 
@@ -93,7 +89,7 @@ void LinuxMiddleware::ReadInotifyEvent()
 
 void LinuxMiddleware::ProcessInotifyEvent(const inotify_event *event)
 {
-    printf("%s()\n", __func__);
+    debug_enter();
 
     if (event->mask & (IN_CREATE | IN_MODIFY)) {
         ProcessPidFileEvent();

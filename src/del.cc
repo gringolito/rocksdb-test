@@ -7,10 +7,10 @@
 // think this stuff is worth it, you can buy me a beer in return. Filipe Utzig.
 // ----------------------------------------------------------------------------
 
-#include <cassert>
 #include <iostream>
 
 #include "mpsync/db.h"
+#include "utils/assert.h"
 
 namespace mpsync {
 
@@ -20,7 +20,7 @@ void DelFromDB(std::string &&key)
     options.operation_mode = DB::OperationMode::Master;
     DB db("test", options);
 
-    assert(db.Delete(key));
+    assert_debug(db.Delete(key), "Del operation failed: key = %s", key.c_str());
 
     std::cout << " -- Releasing DB LOCK --" << std::endl;
 }
