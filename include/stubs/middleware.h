@@ -31,13 +31,13 @@ class Middleware : public mpsync::Middleware {
     void PublishServer(const ProcessSignature &server_signature) final;
     void UnpublishServer() final;
     void SubscribeToServer(const ProcessSignature &server_signature,
-                           OnServerFoundCb on_server_found_event,
-                           OnServerLostCb on_server_lost_event) final;
-    void SubscribeToFdEvents(int fd, OnFdEventCb on_fd_event) final;
+                           OnServerFoundCb &&on_server_found_event,
+                           OnServerLostCb &&on_server_lost_event) final;
+    void SubscribeToFdEvents(int fd, OnFdEventCb &&on_fd_event) final;
     void UnsubscribeFromFdEvents(int fd) final;
     bool LoopWhile(bool *keeprunning) final;
     void SendSignal(const Pid &pid, const Signal &signal, const std::string &content) final;
-    void RegisterToSignal(const Signal &signal, OnSignalReceivedCb on_signal_received) final;
+    void RegisterToSignal(const Signal &signal, OnSignalReceivedCb &&on_signal_received) final;
 
    protected:
     Middleware();

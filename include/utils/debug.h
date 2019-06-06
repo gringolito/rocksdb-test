@@ -9,21 +9,23 @@
 #ifndef MPSYNC_INCLUDE_UTILS_DEBUG_H_
 #define MPSYNC_INCLUDE_UTILS_DEBUG_H_
 
-#include "stdio.h"
+#include <cstdio>
+#include <cstring>
 
 static constexpr bool kDebugEnabled = true;
 
-#define debug_enter()                                  \
-    do {                                               \
-        if (kDebugEnabled) printf("%s()\n", __func__); \
-    } while (0)
 #define debug_enterp(_fmt, ...)                                               \
     do {                                                                      \
         if (kDebugEnabled) printf("%s(" _fmt ")\n", __func__, ##__VA_ARGS__); \
     } while (0)
+
 #define debug(_fmt, ...)                                                       \
     do {                                                                       \
         if (kDebugEnabled) printf("%s() " _fmt "\n", __func__, ##__VA_ARGS__); \
     } while (0)
+
+#define debug_enter() debug("")
+
+#define debug_errno() debug("%d (%s)", errno, strerror(errno))
 
 #endif /* MPSYNC_INCLUDE_UTILS_DEBUG_H_ */

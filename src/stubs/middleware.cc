@@ -11,14 +11,13 @@
 #include <poll.h>
 #include <signal.h>
 #include <unistd.h>
-#include <cassert>
-#include <cstdio>
 #include <cstring>
 
 #include <algorithm>
 #include <vector>
 
 #include "stubs/linux/middleware.h"
+#include "utils/assert.h"
 #include "utils/debug.h"
 
 namespace mpsync {
@@ -39,7 +38,8 @@ struct SignalMessage {
 
     void Deserialize(std::string &&serialized)
     {
-        assert(serialized.size() >= sizeof(pid));
+        assert_debug(serialized.size() >= sizeof(pid), "Invalid serialized message size: %zu",
+                     serialized.size());
         auto pid_str = serialized.substr(0, sizeof(pid));
         memcpy(&pid, pid_str.c_str(), sizeof(pid));
         content = serialized.substr(sizeof(pid));
@@ -105,8 +105,8 @@ void Middleware::UnpublishServer()
 }
 
 void Middleware::SubscribeToServer(const ProcessSignature &server_signature,
-                                  OnServerFoundCb on_server_found_event,
-                                  OnServerLostCb on_server_lost_event)
+                                   OnServerFoundCb &&on_server_found_event,
+                                   OnServerLostCb &&on_server_lost_event)
 {
     debug_enterp("%s", server_signature._name.c_str());
 
@@ -116,7 +116,7 @@ void Middleware::SubscribeToServer(const ProcessSignature &server_signature,
     WatchServerPid();
 }
 
-void Middleware::SubscribeToFdEvents(int fd, OnFdEventCb on_fd_event)
+void Middleware::SubscribeToFdEvents(int fd, OnFdEventCb &&on_fd_event)
 {
     debug_enterp("%d", fd);
 
@@ -151,29 +151,29 @@ bool Middleware::LoopWhile(bool *keeprunning)
 void Middleware::SendSignal(const Pid &pid, const Signal &signal, const std::string &content)
 {
     SignalMessage message{};
-    message.pid = pid;
+    message.pid = me_;
     message.content = content;
 
-    assert(PidIsAlive(pid));
+    assert_debug(PidIsAlive(pid), "Can not send a signal to a dead process (PID %zu)", pid._pid);
     MessageQueue signal_queue(MessageQueue::Mode::Sender, pid, signal._name);
-    signal_queue.Send(message.Serialize());
+    assert_debug(signal_queue.Send(message.Serialize()), "%s", signal_queue.LastError().c_str());
 }
 
-void Middleware::RegisterToSignal(const Signal &signal, OnSignalReceivedCb on_signal_received)
+void Middleware::RegisterToSignal(const Signal &signal, OnSignalReceivedCb &&on_signal_received)
 {
     debug_enterp("%s", signal._name.c_str());
 
-    MessageQueue signal_queue(MessageQueue::Mode::Receiver, me_, signal._name);
+    auto ret = signal_queues_.emplace(
+        signal, MessageQueue(MessageQueue::Mode::Receiver, me_, signal._name));
+    auto &queue = ret.first->second;
 
-    SubscribeToFdEvents(signal_queue.GetDescriptor(), [&on_signal_received, &signal_queue](int) {
+    SubscribeToFdEvents(queue.GetDescriptor(), [on_signal_received, &queue](int) {
         std::string received;
-        assert(signal_queue.Receive(received));
+        assert_debug(queue.Receive(received), "%s", queue.LastError().c_str());
         SignalMessage message{};
         message.Deserialize(std::move(received));
         on_signal_received(std::move(message.pid), std::move(message.content));
     });
-
-    signal_queues_.emplace(signal, signal_queue);
 }
 
 void Middleware::ProcessPidFileEvent()
@@ -279,7 +279,7 @@ bool Middleware::Poll()
 
 bool Middleware::ProcessPollEvent(const pollfd *fd)
 {
-    debug_enter();
+    debug_enterp("%d", fd->fd);
 
     /** Process input events in fd */
     if (fd->revents & (POLLIN | POLLPRI)) {
@@ -288,7 +288,7 @@ bool Middleware::ProcessPollEvent(const pollfd *fd)
 
     /** Process errors in fd */
     if (fd->revents & (POLLERR | POLLHUP | POLLNVAL)) {
-        debug("%d %s", errno, strerror(errno));
+        debug_errno();
         return false;
     }
 

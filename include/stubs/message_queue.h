@@ -22,21 +22,28 @@ namespace stubs {
 class MessageQueue final {
    public:
     enum class Mode {
+        None,
         Sender,
         Receiver
     };
 
     MessageQueue(Mode mode, const Pid &pid, const std::string &name);
+    MessageQueue(MessageQueue &&);
+    MessageQueue &operator=(MessageQueue &&);
+    MessageQueue(const MessageQueue &) = delete;
+    MessageQueue &operator=(const MessageQueue &) = delete;
     ~MessageQueue();
     int GetDescriptor() const;
-    bool Send(const std::string &message) const;
-    bool Receive(std::string &message) const;
+    bool Send(const std::string &message);
+    bool Receive(std::string &message);
+    std::string LastError();
 
    private:
     Mode mode_;
     std::string queue_path_;
     mqd_t queue_;
     size_t msg_size_;
+    std::string last_error_;
 };
 
 }  // namespace stubs
