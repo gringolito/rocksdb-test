@@ -1,0 +1,3 @@
+[submodule "third-party/tipcutils"]
+	path = third-party/tipcutils
+	url = https://git.code.sf.net/p/tipc/tipcutils
