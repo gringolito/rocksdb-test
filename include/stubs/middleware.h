@@ -10,7 +10,6 @@
 #ifndef MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
 #define MPSYNC_INCLUDE_STUBS_MIDDLEWARE_H_
 
-#include <fstream>
 #include <set>
 #include <unordered_map>
 
@@ -52,7 +51,7 @@ class Middleware : public mpsync::Middleware {
     OnServerLostCb on_server_lost_cb_;
     Pid me_;
     Pid server_pid_;
-    std::ofstream server_pid_file_;
+    int server_service_;
     bool server_is_found_;
     bool server_published_;
     bool first_poll_call_;

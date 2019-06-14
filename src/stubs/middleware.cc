@@ -16,12 +16,16 @@
 #include <algorithm>
 #include <vector>
 
+#include "tipcc.h"
+
 #include "stubs/linux/middleware.h"
 #include "utils/assert.h"
 #include "utils/debug.h"
 
 namespace mpsync {
 namespace stubs {
+
+#define get_service_type(_a) *(static_cast<uint32_t *>(_a))
 
 struct SignalMessage {
     Pid pid;
@@ -68,7 +72,7 @@ Middleware::Middleware()
       first_poll_call_(true)
 {
     debug_enter();
-    me_._pid = getpid();
+    me_._pid = tipc_own_node();
 }
 
 Middleware::~Middleware()
@@ -82,13 +86,16 @@ Middleware::~Middleware()
 
 void Middleware::PublishServer(const ProcessSignature &server_signature)
 {
-    debug_enterp("%s", server_signature._name.c_str());
+    debug_enterp("{name %s sig %d}", server_signature._name.c_str(),
+                 *(static_cast<uint32_t *>(server_signature._signature)));
 
     myself_ = server_signature;
 
-    server_pid_file_.open(kPidPath + myself_._name, std::ofstream::binary | std::ofstream::trunc);
-    server_pid_file_ << me_._pid << std::endl;
-    server_published_ = true;
+    int server_service_ = tipc_socket(get_service_type(server_signature._signature));
+    assert_errno(tipc_sock_non_block(service_socket));
+    SubscribeToFdEvents(server_service_, [](int service) {
+        debug("%d", service);
+    });
 }
 
 void Middleware::UnpublishServer()
@@ -99,8 +106,8 @@ void Middleware::UnpublishServer()
         return;
     }
 
-    server_pid_file_ << 0 << std::endl;
-    server_pid_file_.close();
+    UnsubscribeFromFdEvents(server_service_);
+    tipc_close(server_service_);
     server_published_ = false;
 }
 
