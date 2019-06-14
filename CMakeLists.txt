@@ -10,6 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 # Build project
 # ##################################################################################################
 add_subdirectory(include)
+add_subdirectory(third-party)
 add_subdirectory(src)
 if(BUILD_TESTING)
     add_subdirectory(test)
