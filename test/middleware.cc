@@ -37,13 +37,29 @@ class Middleware : public testing::Test {
     bool keeprunning_;
 };
 
-TEST_F(Middleware, ServerFound)
+TEST_F(Middleware, ServerFoundBeforeSubscription)
+{
+    server_.Start();
+
+    mw_->SubscribeToServer(kTestProcess, [this](Pid &&server) {
+                                             server_pid_ = std::move(server);
+                                             keeprunning_ = false;
+                                         },
+                           [](Pid &&) { GTEST_FAIL() << "Not expecting ServerLost"; });
+
+    keeprunning_ = true;
+    EXPECT_EQ(true, mw_->LoopWhile(&keeprunning_));
+    EXPECT_FALSE(keeprunning_);
+    EXPECT_NE(Pid{}, server_pid_);
+}
+
+TEST_F(Middleware, ServerFoundAfterSubscription)
 {
     mw_->SubscribeToServer(kTestProcess, [this](Pid &&server) {
                                              server_pid_ = std::move(server);
                                              keeprunning_ = false;
                                          },
-                           [](Pid &&) { ASSERT_FALSE(true) << "Not expecting ServerLost"; });
+                           [](Pid &&) { GTEST_FAIL() << "Not expecting ServerLost"; });
 
     server_.Start();
 
@@ -55,12 +71,13 @@ TEST_F(Middleware, ServerFound)
 
 TEST_F(Middleware, ServerFoundMultiple)
 {
-    mw_->SubscribeToServer(kTestProcess, [this](Pid &&server) {
-                                             EXPECT_NE(Pid{}, server);
-                                             multiple_server_pids_.emplace(std::move(server));
-                                             keeprunning_ = false;
-                                         },
-                           [](Pid &&) { ASSERT_FALSE(true) << "Not expecting ServerLost"; });
+    mw_->SubscribeToServer(kTestProcess,
+                           [this](Pid &&server) {
+                               EXPECT_NE(Pid{}, server);
+                               EXPECT_TRUE(multiple_server_pids_.emplace(std::move(server)).second);
+                               keeprunning_ = false;
+                           },
+                           [](Pid &&) { GTEST_FAIL() << "Not expecting ServerLost"; });
 
     server_.Start();
     server_.Start();
@@ -107,6 +124,44 @@ TEST_F(Middleware, ServerDies)
 
 TEST_F(Middleware, ServerRestart)
 {
+    server_.Start();
+
+    bool server_found = false;
+    bool server_lost = false;
+
+    mw_->SubscribeToServer(kTestProcess, [this, &server_found](Pid &&server) {
+                                             server_pid_ = std::move(server);
+                                             server_found = true;
+                                             keeprunning_ = false;
+                                         },
+                           [this, &server_lost](Pid &&server) {
+                               EXPECT_EQ(server_pid_, server);
+                               server_lost = true;
+                               keeprunning_ = false;
+                           });
+
+    keeprunning_ = true;
+    EXPECT_EQ(true, mw_->LoopWhile(&keeprunning_));
+    EXPECT_FALSE(keeprunning_);
+    EXPECT_NE(Pid{}, server_pid_);
+    EXPECT_TRUE(server_found);
+    EXPECT_FALSE(server_lost);
+
+    Pid old_pid = server_pid_;
+    server_.Restart();
+
+    keeprunning_ = true;
+    EXPECT_EQ(true, mw_->LoopWhile(&keeprunning_));
+    EXPECT_FALSE(keeprunning_);
+    EXPECT_TRUE(server_found);
+    EXPECT_TRUE(server_lost);
+
+    keeprunning_ = true;
+    EXPECT_EQ(true, mw_->LoopWhile(&keeprunning_));
+    EXPECT_FALSE(keeprunning_);
+    EXPECT_TRUE(server_found);
+    EXPECT_TRUE(server_lost);
+    EXPECT_NE(old_pid, server_pid_);
 }
 
 TEST_F(Middleware, SendSignal)
