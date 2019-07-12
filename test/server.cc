@@ -18,10 +18,8 @@ namespace test {
 
 class Server final {
    public:
-    Server()
+    Server() : mw_(new stubs::Middleware()), sync_(new SyncServer(mw_, kTestProcess))
     {
-        mw_ = stubs::Middleware::Build();
-        sync_ = new SyncServer(mw_, kTestProcess);
         mw_->RegisterToSignal(kSignalName, [](Pid &&pid, std::string &&message) {
             std::cout << "Name set to: " << message << " by PID: " << pid._pid << std::endl;
         });

@@ -25,44 +25,41 @@ static const std::string kPidPath{ "/tmp/stubmw/pids/" };
 
 class Middleware : public mpsync::Middleware {
    public:
-    static Middleware *Build();
+    Middleware();
     virtual ~Middleware();
     void PublishServer(const ProcessSignature &server_signature) final;
     void UnpublishServer() final;
     void SubscribeToServer(const ProcessSignature &server_signature,
                            OnServerFoundCb &&on_server_found_event,
                            OnServerLostCb &&on_server_lost_event) final;
+    void UnsubscribeFromServer() final;
     void SubscribeToFdEvents(int fd, OnFdEventCb &&on_fd_event) final;
     void UnsubscribeFromFdEvents(int fd) final;
     bool LoopWhile(bool *keeprunning) final;
     void SendSignal(const Pid &pid, const Signal &signal, const std::string &content) final;
     void RegisterToSignal(const Signal &signal, OnSignalReceivedCb &&on_signal_received) final;
 
-   protected:
-    Middleware();
-    ProcessSignature listening_server_;
-    virtual void WatchServerPid() = 0;
-    void ProcessPidFileEvent();
-    void ServerLost();
-
    private:
     ProcessSignature myself_;
+    ProcessSignature listening_server_;
     OnServerFoundCb on_server_found_cb_;
     OnServerLostCb on_server_lost_cb_;
     Pid me_;
-    Pid server_pid_;
+    std::set<Pid> server_pids_;
     int server_service_;
+    int subscription_service_;
     bool server_is_found_;
     bool server_published_;
-    bool first_poll_call_;
+    bool server_subscribed_;
     std::unordered_map<int, std::function<void()>> fd_callbacks_;
     std::unordered_map<Signal, MessageQueue> signal_queues_;
     std::set<int> poll_fds_;
     bool PidIsAlive(const Pid &pid);
-    Pid ReadPid();
     void ServerFound(Pid &&pid);
+    void ServerLost(Pid &&pid);
     bool Poll();
     bool ProcessPollEvent(const pollfd *fd);
+    void ProcessServerEvent(int service);
 };
 
 }  // namespace stubs

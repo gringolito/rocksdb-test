@@ -20,10 +20,9 @@ namespace test {
 
 class Client final {
    public:
-    Client()
+    Client() : mw_(new stubs::Middleware()), sync_(new SyncClient(mw_, kTestProcess))
+
     {
-        mw_ = stubs::Middleware::Build();
-        sync_ = new SyncClient(mw_, kTestProcess);
         sync_->RegisterServerFound([this](Pid &&server) {
             printf("ServerFound(%zu)\n", server._pid);
             server_pid_ = server;

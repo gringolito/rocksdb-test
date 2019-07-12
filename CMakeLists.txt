@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14.5)
 include("${CMAKE_CURRENT_LIST_DIR}/meta-info.in")
 project(rocksdb-test VERSION ${project_version} DESCRIPTION ${project_description})
 

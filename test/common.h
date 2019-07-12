@@ -16,7 +16,7 @@
 namespace mpsync {
 
 /* Process definitions */
-static constexpr uint32_t kTestProcessService{7};
+static constexpr uint32_t kTestProcessService{64};  // 0 to 63 is system reserved
 static const ProcessSignature kTestProcess{ ._name = "test", ._signature = &kTestProcessService };
 
 /* Signals definitions */

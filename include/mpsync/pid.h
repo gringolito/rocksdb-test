@@ -19,6 +19,21 @@ struct Pid {
     uint64_t _pid;
 };
 
+static inline bool operator==(const Pid &lhs, const Pid &rhs)
+{
+    return lhs._pid == rhs._pid;
+}
+
+static inline bool operator!=(const Pid &lhs, const Pid &rhs)
+{
+    return !(lhs == rhs);
+}
+
+static inline bool operator<(const Pid &lhs, const Pid &rhs)
+{
+    return lhs._pid < rhs._pid;
+}
+
 struct ProcessSignature {
     std::string _name;
     const void *_signature;

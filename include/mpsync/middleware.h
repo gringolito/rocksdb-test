@@ -30,6 +30,7 @@ class Middleware {
     virtual void SubscribeToServer(const ProcessSignature &server_signature,
                                    OnServerFoundCb &&on_server_found_event,
                                    OnServerLostCb &&on_server_lost_event) = 0;
+    virtual void UnsubscribeFromServer() = 0;
     virtual void SubscribeToFdEvents(int fd, OnFdEventCb &&on_fd_event) = 0;
     virtual void UnsubscribeFromFdEvents(int fd) = 0;
     virtual bool LoopWhile(bool *keeprunning) = 0;
