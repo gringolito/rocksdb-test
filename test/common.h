@@ -16,17 +16,17 @@
 namespace mpsync {
 
 /* Process definitions */
-static constexpr uint32_t kTestProcessService{64};  // 0 to 63 is system reserved
+static constexpr uint32_t kTestProcessService{ 1000 };  // 0 to 63 is system reserved
 static const ProcessSignature kTestProcess{ ._name = "test", ._signature = &kTestProcessService };
 
 /* Signals definitions */
-static constexpr uint32_t kSignalNameService{(kTestProcessService << 8) | 1};
+static constexpr uint32_t kSignalNameService{(kTestProcessService << 16) | 1};
 static const Signal kSignalName{ ._name = "name", ._signature = &kSignalNameService };
-static constexpr uint32_t kSignalPositionService{(kTestProcessService << 8) | 2};
+static constexpr uint32_t kSignalPositionService{(kTestProcessService << 16) | 2};
 static const Signal kSignalPosition{ ._name = "position", ._signature = &kSignalPositionService };
-static constexpr uint32_t kSignalTimesService{(kTestProcessService << 8) | 3};
+static constexpr uint32_t kSignalTimesService{(kTestProcessService << 16) | 3};
 static const Signal kSignalTimes{ ._name = "times", ._signature = &kSignalTimesService };
-static constexpr uint32_t kSignalValidService{(kTestProcessService << 8) | 4};
+static constexpr uint32_t kSignalValidService{(kTestProcessService << 16) | 4};
 static const Signal kSignalValid{ ._name = "valid", ._signature = &kSignalValidService };
 
 }  // namespace mpsync

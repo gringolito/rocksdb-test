@@ -22,11 +22,11 @@ namespace mpsync {
 namespace test {
 
 /* Service / Signals definitions */
-static constexpr uint32_t kMiddlewareTestingService{ 7 };
-static constexpr uint32_t kSignalResquestToStopService{(kMiddlewareTestingService << 8) | 1 };
+static constexpr uint32_t kMiddlewareTestingService{ 64 };  // 0 to 63 is system reserved
+static constexpr uint32_t kSignalResquestToStopService{(kMiddlewareTestingService << 16) | 1 };
 static const Signal kSignalResquestToStop{ ._name = "RequestToStop",
                                            ._signature = &kSignalResquestToStopService };
-static constexpr uint32_t kSignalResquestToDieService{(kMiddlewareTestingService << 8) | 1 };
+static constexpr uint32_t kSignalResquestToDieService{(kMiddlewareTestingService << 16) | 2 };
 static const Signal kSignalResquestToDie{ ._name = "RequestToDie",
                                           ._signature = &kSignalResquestToDieService };
 
@@ -98,12 +98,10 @@ class Server final {
     {
         bool keeprunning = true;
         Middleware *mw = new stubs::Middleware();
-        /*
         mw->RegisterToSignal(kSignalResquestToStop,
                              [&keeprunning](Pid &&, std::string &&) { keeprunning = false; });
         mw->RegisterToSignal(kSignalResquestToDie,
                              [](Pid &&, std::string &&) { exit(EXIT_FAILURE); });
-        */
         mw->PublishServer(server_);
         mw->LoopWhile(&keeprunning);
         delete mw;
